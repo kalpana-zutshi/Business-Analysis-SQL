@@ -1,0 +1,89 @@
+/*Query 1 - query used for first insight */
+
+SELECT c.country,
+       g.Name GenreName,
+       COUNT(i.InvoiceId) PerCountrySales
+FROM Customer c
+JOIN Invoice i ON c.CustomerId = i.CustomerId
+JOIN InvoiceLine l ON l.InvoiceId = i.InvoiceId
+JOIN Track t ON t.TrackId = l.TrackId
+JOIN Genre g ON t.GenreId = g.GenreId
+WHERE g.Name = 'Latin'
+GROUP BY 1
+ORDER BY 3 DESC
+
+
+
+
+/*Query 2 - query used for first insight */
+
+WITH table1 AS
+  (SELECT STRFTIME('%Y', i.InvoiceDate) YEAR,
+                                        COUNT(t.TrackId) * l.Quantity Latin
+   FROM Invoice i
+   JOIN InvoiceLine l ON i.InvoiceId = l.InvoiceId
+   JOIN Track t ON t.TrackId = l.TrackId
+   JOIN Genre g ON g.GenreId = t.GenreId
+   AND g.Name = 'Latin'
+   GROUP BY 1),
+     table2 AS
+  (SELECT STRFTIME('%Y', i.InvoiceDate) YEAR,
+                                        COUNT(t.TrackId) * l.Quantity Rock
+   FROM Invoice i
+   JOIN InvoiceLine l ON i.InvoiceId = l.InvoiceId
+   JOIN Track t ON t.TrackId = l.TrackId
+   JOIN Genre g ON g.GenreId = t.GenreId
+   AND g.Name = 'Rock'
+   GROUP BY 1),
+     table3 AS
+  (SELECT STRFTIME('%Y', i.InvoiceDate) YEAR,
+                                        COUNT(t.TrackId) * l.Quantity Metal
+   FROM Invoice i
+   JOIN InvoiceLine l ON i.InvoiceId = l.InvoiceId
+   JOIN Track t ON t.TrackId = l.TrackId
+   JOIN Genre g ON g.GenreId = t.GenreId
+   AND g.Name = 'Metal'
+   GROUP BY 1)
+SELECT t1.Year,
+       t1.Latin,
+       t2.Rock,
+       t3.Metal
+FROM table1 t1
+JOIN table2 t2 ON t1.Year =T2.Year
+JOIN table3 t3 ON t3.Year = t2.Year
+GROUP BY 1
+
+
+
+/*Query 3 - query used for first insight */
+
+WITH table1 AS
+  (SELECT TrackId tid,
+          COUNT(TrackId) * UnitPrice m_track
+   FROM InvoiceLine
+   GROUP BY 1
+   ORDER BY 2 DESC)
+SELECT m.Name,
+       ROUND(SUM(m_track))
+FROM MediaType m
+JOIN Track t ON t.MediaTypeId = m.MediaTypeId
+JOIN table1 t1 ON t1.tid = t.TrackId
+GROUP BY 1
+ORDER BY 2 DESC
+
+
+
+/*Query 4 - query used for first insight */
+
+SELECT i.BillingState,
+       SUM(t.UnitPrice * l.Quantity) State_total
+FROM InvoiceLine l
+JOIN Invoice i ON l.InvoiceId = i.InvoiceId
+JOIN Track t ON t.TrackId = l.TrackId
+JOIN Genre g ON g.GenreId = t.GenreId
+WHERE BillingCountry = 'USA'
+  AND g.Name = 'Metal'
+GROUP BY 1
+ORDER BY 2 DESC
+
+
